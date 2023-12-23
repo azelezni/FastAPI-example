@@ -14,8 +14,29 @@ env:
 
 
 jobs:
+  Semver:
+    runs-on: ubuntu-latest
+    container: marcelocorreia/semver
+    permissions:
+      contents: read
+    if: github.ref == 'refs/heads/master'
+    outputs:
+      patched: ${{ steps.bump.outputs.patched }}
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: version bump
+        id: bump
+        run: |
+          CURRENT=$(git tag -l --sort=-v:refname)
+          PATCHED=$(semver -c -i patch $CURRENT)
+          echo "patched=$PATCHED" >> "$GITHUB_OUTPUT"
+
   Build:
     runs-on: ubuntu-latest
+    needs:
+      - Semver
     permissions:
       packages: write
       contents: read
@@ -37,24 +58,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name == 'push'
 
-      - name: Push
+      - name: Push sha
         run: docker push ghcr.io/${{ github.repository_owner }}/fastapi:${{ github.sha }}
         if: github.event_name == 'push'
 
-  Semver:
-    runs-on: ubuntu-latest
-    container: marcelocorreia/semver
-    permissions:
-      contents: read
-
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: version bump
+      - name: Push semver
+        env:
+          PATCHED: ${{ needs.Semver.outputs.patched }}
         run: |
-          CURRENT=$(git tag -l --sort=-v:refname)
-          PATCHED=$(semver -c -i patch $CURRENT)
-          git tag ${PATCHED}
+          docker tag ghcr.io/${{ github.repository_owner }}/fastapi:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/fastapi:$PATCHED
+          docker push ghcr.io/${{ github.repository_owner }}/fastapi:$PATCHED
+        if: ${{ (github.event_name == 'push') && (github.ref == 'refs/heads/master') }}
