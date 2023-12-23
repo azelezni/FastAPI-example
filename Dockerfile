@@ -22,3 +22,5 @@ RUN set -eux \
 
 # copy project
 COPY . /src/
+
+ENTRYPOINT ["uvicorn", "app.main:app"]
