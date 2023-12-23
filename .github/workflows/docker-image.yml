@@ -47,6 +47,8 @@ jobs:
     permissions:
       contents: read
 
+    if: github.ref == 'refs/heads/master'
+
     steps:
       - uses: actions/checkout@v1
         with:
