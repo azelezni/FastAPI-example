@@ -32,13 +32,14 @@ jobs:
           CURRENT=$(git tag -l --sort=-v:refname)
           PATCHED=$(semver -c -i patch $CURRENT)
           echo "patched=$PATCHED" >> "$GITHUB_OUTPUT"
+          echo $PATCHED > /tmp/patched
 
       - name: Git tags
         id: bump
         env:
           PATCHED: ${{ steps.bump.outputs.patched }}
         run: |
-          git tag $PATCHED
+          git tag $(cat /tmp/patched)
           git push --tags
 
   DockerBuild:
