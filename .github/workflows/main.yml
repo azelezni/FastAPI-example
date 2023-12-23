@@ -33,14 +33,13 @@ jobs:
           PATCHED=$(semver -c -i patch $CURRENT)
           echo "patched=$PATCHED" >> "$GITHUB_OUTPUT"
 
-  Build:
+  DockerBuild:
     runs-on: ubuntu-latest
     needs:
       - Semver
     permissions:
       packages: write
       contents: read
-
     steps:
       - uses: actions/checkout@v1
         with:
@@ -69,3 +68,25 @@ jobs:
           docker tag ghcr.io/${{ github.repository_owner }}/fastapi:${{ github.sha }} ghcr.io/${{ github.repository_owner }}/fastapi:$PATCHED
           docker push ghcr.io/${{ github.repository_owner }}/fastapi:$PATCHED
         if: ${{ (github.event_name == 'push') && (github.ref == 'refs/heads/master') }}
+
+  HelmRelease:
+    runs-on: ubuntu-latest
+    needs:
+      - Semver
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.5.0
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CR_VERSION: ${{ needs.Semver.outputs.patched }}
+          CR_CHARTS_DIR: charts
