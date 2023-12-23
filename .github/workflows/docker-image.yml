@@ -53,6 +53,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: version bump
         run: |
-          CURRENT = $(git tag -l --sort=-v:refname)
-          PATCHED = semver -c -i patch $CURRENT
+          CURRENT=$(git tag -l --sort=-v:refname)
+          PATCHED=$(semver -c -i patch $CURRENT)
           git tag ${PATCHED}
