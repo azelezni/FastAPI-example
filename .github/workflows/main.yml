@@ -35,8 +35,10 @@ jobs:
 
       - name: Git tags
         id: bump
+        env:
+          PATCHED: ${{ steps.bump.outputs.patched }}
         run: |
-          git tag ${{ steps.bump.outputs.patched }}
+          git tag $PATCHED
           git push --tags
 
   DockerBuild:
