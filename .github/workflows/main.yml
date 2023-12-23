@@ -38,13 +38,14 @@ jobs:
           PATCHED=$(semver -c -i patch $CURRENT)
           echo "patched=$PATCHED" >> "$GITHUB_OUTPUT"
 
-      - name: Git tags
-        id: push
-        env:
-          PATCHED: ${{ steps.bump.outputs.patched }}
-        run: |
-          git tag $PATCHED
-          git push --tags
+      # TODO Fix git push
+#      - name: Git tags
+#        id: push
+#        env:
+#          PATCHED: ${{ steps.bump.outputs.patched }}
+#        run: |
+#          git tag $PATCHED
+#          git push --tags
 
   DockerBuild:
     runs-on: ubuntu-latest
